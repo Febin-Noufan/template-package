@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// A model class that represents a section in the template page.
-/// 
+///
 /// Each section contains a title, content widget, and optional icon and height.
 class Section {
   /// The title text displayed in the section header and navigation menu
@@ -17,7 +17,7 @@ class Section {
   final double? height;
 
   /// Creates a new section with the required title and content.
-  /// 
+  ///
   /// [title] The text to display in the section header and navigation
   /// [content] The main widget to display in the section body
   /// [icon] Optional icon shown in the navigation menu

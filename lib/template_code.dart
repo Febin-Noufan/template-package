@@ -1,39 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:template_package/section.dart';
 
-/// A template page widget that provides a responsive layout with a collapsible
-/// navigation menu and scrollable sections.
-/// 
-/// The template includes a side navigation menu that can be pinned or collapsed,
-/// and automatically expands on hover. Each section is displayed in a scrollable
-/// container with a header.
 class TemplatePage extends StatefulWidget {
-  /// List of sections to display in the template
   final List<Section> sections;
-
-  /// Title displayed in the app bar
   final String title;
-
-  /// Optional background color for the main content area
   final Color? backgroundColor;
-
-  /// Optional color for the navigation menu
   final Color? menuColor;
-
-  /// Width of the expanded navigation menu
   final double menuWidth;
-
-  /// Width of the collapsed navigation menu
   final double collapsedMenuWidth;
 
-  /// Creates a new template page with the required sections.
-  /// 
-  /// [sections] The list of sections to display
-  /// [title] The text to show in the app bar (defaults to 'Template')
-  /// [backgroundColor] Optional color for the main content area
-  /// [menuColor] Optional color for the navigation menu
-  /// [menuWidth] Width of expanded menu (defaults to 220)
-  /// [collapsedMenuWidth] Width of collapsed menu (defaults to 70)
   const TemplatePage({
     super.key,
     required this.sections,
@@ -49,37 +25,35 @@ class TemplatePage extends StatefulWidget {
 }
 
 class _TemplatePageState extends State<TemplatePage> {
-  /// Controller for handling scroll animations
   final ScrollController _scrollController = ScrollController();
-
-  /// Whether the navigation menu is pinned open
+  late final FocusNode _focusNode;
   bool _isPinned = false;
-
-  /// Whether the navigation menu is being hovered over
   bool _isHovered = false;
+
+  //DateTime? _lastEscapePressTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+  }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  /// Toggles the pinned state of the navigation menu
   void _togglePin() => setState(() => _isPinned = !_isPinned);
 
-  /// Updates the hover state of the navigation menu
-  void _setHover(bool value) =>
-      setState(() => _isHovered = !_isPinned && value);
+  void _setHover(bool value) => setState(() => _isHovered = !_isPinned && value);
 
-  /// Scrolls to the specified section index with animation
-  /// 
-  /// Calculates the offset based on section heights and animates to that position
   void _scrollToSection(int index) {
     double offset = 0.0;
 
-    // Calculate the offset dynamically based on the heights of sections
     for (int i = 0; i < index; i++) {
-      offset += widget.sections[i].height ?? 500; // Default height is 500
+      offset += widget.sections[i].height ?? 500;
     }
 
     _scrollController.animateTo(
@@ -88,6 +62,21 @@ class _TemplatePageState extends State<TemplatePage> {
       curve: Curves.easeInOut,
     );
   }
+
+  // void _handleKeyEvent(RawKeyEvent event) {
+  //   if (event is RawKeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+  //     final now = DateTime.now();
+  //     if (_lastEscapePressTime == null ||
+  //         now.difference(_lastEscapePressTime!) > const Duration(milliseconds: 300)) {
+  //       _lastEscapePressTime = now; // First press or timeout
+  //     } else {
+  //       if (Navigator.canPop(context)) {
+  //         Navigator.pop(context); // Double press detected
+  //       }
+  //       _lastEscapePressTime = null;
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -116,13 +105,12 @@ class _TemplatePageState extends State<TemplatePage> {
             child: SingleChildScrollView(
               controller: _scrollController,
               child: Column(
-                children: [
-                  for (var section in widget.sections)
-                    _SectionWidget(
-                      section: section,
-                      defaultHeight: 500,
-                    ),
-                ],
+                children: widget.sections.map((section) {
+                  return _SectionWidget(
+                    section: section,
+                    defaultHeight: 500,
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -132,33 +120,15 @@ class _TemplatePageState extends State<TemplatePage> {
   }
 }
 
-/// A collapsible navigation menu that displays section titles and icons
 class _NavigationMenu extends StatelessWidget {
-  /// List of sections to display in the menu
   final List<Section> sections;
-
-  /// Whether the menu is pinned open
   final bool isPinned;
-
-  /// Whether the menu is being hovered over
   final bool isHovered;
-
-  /// Callback when the pin button is pressed
   final VoidCallback onPinPressed;
-
-  /// Callback when hover state changes
   final ValueChanged<bool> onHoverChange;
-
-  /// Callback when a section is selected
   final ValueChanged<int> onSectionSelected;
-
-  /// Width of the menu when expanded
   final double expandedWidth;
-
-  /// Width of the menu when collapsed
   final double collapsedWidth;
-
-  /// Optional background color for the menu
   final Color? backgroundColor;
 
   const _NavigationMenu({
@@ -198,7 +168,7 @@ class _NavigationMenu extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(10),
               child: IconButton(
-                icon: Icon(isPinned ? Icons.lock : Icons.lock_open),
+                icon: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined),
                 onPressed: onPinPressed,
               ),
             ),
@@ -220,23 +190,16 @@ class _NavigationMenu extends StatelessWidget {
   }
 }
 
-/// A navigation menu item that displays a section's icon and title
 class _NavigationItem extends StatelessWidget {
-  /// The section to display
   final Section section;
-
-  /// Whether the navigation menu is expanded
   final bool isExpanded;
-
-  /// Callback when the item is tapped
   final VoidCallback onTap;
 
   const _NavigationItem({
-    Key? key,
     required this.section,
     required this.isExpanded,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -262,19 +225,14 @@ class _NavigationItem extends StatelessWidget {
   }
 }
 
-/// A widget that displays a section's content with a header
 class _SectionWidget extends StatelessWidget {
-  /// The section to display
   final Section section;
-
-  /// Default height to use if section doesn't specify one
   final double defaultHeight;
 
   const _SectionWidget({
-    Key? key,
     required this.section,
     this.defaultHeight = 500,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
